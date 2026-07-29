@@ -1,121 +1,127 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useEffect, useState } from 'react'
 import './App.css'
 
+const STORAGE_KEY = 'contacts'
+
+function loadContacts() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+const emptyForm = { name: '', email: '', phone: '' }
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [contacts, setContacts] = useState(loadContacts)
+  const [form, setForm] = useState(emptyForm)
+  const [editingId, setEditingId] = useState(null)
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(contacts))
+  }, [contacts])
+
+  function handleChange(e) {
+    const { name, value } = e.target
+    setForm((f) => ({ ...f, [name]: value }))
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault()
+    if (!form.name.trim()) return
+
+    if (editingId) {
+      setContacts((cs) =>
+        cs.map((c) => (c.id === editingId ? { ...c, ...form } : c)),
+      )
+      setEditingId(null)
+    } else {
+      setContacts((cs) => [...cs, { id: crypto.randomUUID(), ...form }])
+    }
+    setForm(emptyForm)
+  }
+
+  function handleEdit(contact) {
+    setEditingId(contact.id)
+    setForm({ name: contact.name, email: contact.email, phone: contact.phone })
+  }
+
+  function handleDelete(id) {
+    setContacts((cs) => cs.filter((c) => c.id !== id))
+    if (editingId === id) {
+      setEditingId(null)
+      setForm(emptyForm)
+    }
+  }
+
+  function handleCancel() {
+    setEditingId(null)
+    setForm(emptyForm)
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="app">
+      <h1>Carnet de contacts</h1>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      <form onSubmit={handleSubmit} className="contact-form">
+        <input
+          name="name"
+          placeholder="Nom"
+          value={form.name}
+          onChange={handleChange}
+          required
+        />
+        <input
+          name="email"
+          type="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+        />
+        <input
+          name="phone"
+          placeholder="Téléphone"
+          value={form.phone}
+          onChange={handleChange}
+        />
+        <div className="form-actions">
+          <button type="submit">{editingId ? 'Modifier' : 'Ajouter'}</button>
+          {editingId && (
+            <button type="button" onClick={handleCancel}>
+              Annuler
+            </button>
+          )}
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      </form>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      {contacts.length === 0 ? (
+        <p className="empty">Aucun contact pour le moment.</p>
+      ) : (
+        <ul className="contact-list">
+          {contacts.map((c) => (
+            <li key={c.id} className="contact-item">
+              <div>
+                <strong>{c.name}</strong>
+                <div className="contact-details">
+                  {c.email && <span>{c.email}</span>}
+                  {c.phone && <span>{c.phone}</span>}
+                </div>
+              </div>
+              <div className="contact-actions">
+                <button type="button" onClick={() => handleEdit(c)}>
+                  Éditer
+                </button>
+                <button type="button" onClick={() => handleDelete(c.id)}>
+                  Supprimer
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }
 
