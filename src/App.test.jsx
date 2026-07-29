@@ -79,4 +79,20 @@ describe('Carnet de contacts', () => {
     expect(stored).toHaveLength(1)
     expect(stored[0].name).toBe('Margaret Hamilton')
   })
+
+  it('filtre les contacts par nom via la recherche', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(screen.getByPlaceholderText('Nom'), 'Ada Lovelace')
+    await user.click(screen.getByRole('button', { name: /ajouter/i }))
+
+    await user.type(screen.getByPlaceholderText('Nom'), 'Alan Turing')
+    await user.click(screen.getByRole('button', { name: /ajouter/i }))
+
+    await user.type(screen.getByPlaceholderText('Rechercher un contact'), 'ada')
+
+    expect(screen.getByText('Ada Lovelace')).toBeInTheDocument()
+    expect(screen.queryByText('Alan Turing')).not.toBeInTheDocument()
+  })
 })
