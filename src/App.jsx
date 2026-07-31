@@ -18,6 +18,7 @@ function App() {
   const [contacts, setContacts] = useState(loadContacts)
   const [form, setForm] = useState(emptyForm)
   const [editingId, setEditingId] = useState(null)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(contacts))
@@ -61,6 +62,10 @@ function App() {
     setForm(emptyForm)
   }
 
+  const filteredContacts = contacts.filter((c) =>
+    c.name.toLowerCase().includes(search.trim().toLowerCase()),
+  )
+
   return (
     <div className="app">
       <h1>Carnet de contacts</h1>
@@ -96,11 +101,23 @@ function App() {
         </div>
       </form>
 
+      {contacts.length > 0 && (
+        <input
+          type="search"
+          className="search-input"
+          placeholder="Rechercher un contact"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      )}
+
       {contacts.length === 0 ? (
         <p className="empty">Aucun contact pour le moment.</p>
+      ) : filteredContacts.length === 0 ? (
+        <p className="empty">Aucun contact ne correspond à la recherche.</p>
       ) : (
         <ul className="contact-list">
-          {contacts.map((c) => (
+          {filteredContacts.map((c) => (
             <li key={c.id} className="contact-item">
               <div>
                 <strong>{c.name}</strong>

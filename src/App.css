@@ -12,6 +12,17 @@
   margin-bottom: 24px;
 }
 
+.search-input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
 .contact-form input {
   padding: 8px 10px;
   border-radius: 6px;
